@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
+    <title>Food Truck Tycoon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #FF6B9D 0%, #C06C84 25%, #6C5B7B 50%, #355C7D 75%, #2A9D8F 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background elements */
+        .bg-stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .game-world {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Floating food animations */
+        .floating-food {
+            position: fixed;
+            font-size: 40px;
+            pointer-events: none;
+            animation: floatUp 8s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes floatUp {
+            from {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0.7;
+            }
+            to {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Top HUD with gradient animation */
+        .hud {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FDB827 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 5s ease infinite;
+            padding: 25px 35px;
+            border-radius: 25px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4), 0 0 30px rgba(255,107,53,0.5);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 6px solid #FFD700;
+            position: relative;
+            z-index: 10;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hud-title {
+            font-size: 42px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.6), 0 0 20px rgba(255,215,0,0.8);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .truck-emoji {
+            font-size: 56px;
+            animation: bounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4));
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        .hud-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.95);
+            padding: 18px 28px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 4px solid #FFD700;
+            transition: transform 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: scale(1.1) rotate(2deg);
+        }
+
+        .stat-label {
+            font-size: 15px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .money-value { color: #27ae60; }
+        .rep-value { color: #e74c3c; }
+        .day-value { color: #3498db; }
+
+        /* Main game area */
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Food Truck Visual - More vibrant */
+        .truck-section {
+            background: linear-gradient(135deg, #fff 0%, #f8f8f8 100%);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,107,53,0.3);
+            border: 6px solid #FFD700;
+            position: relative;
+            overflow: visible;
+        }
+
+        .truck-visual {
+            width: 100%;
+            height: 280px;
+            background: linear-gradient(135deg, #FF1744 0%, #FF6B35 30%, #F7931E 60%, #FDB827 100%);
+            border-radius: 25px;
+            position: relative;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 5px 20px rgba(255,255,255,0.3);
+            border: 6px solid #333;
+            animation: truckIdle 3s ease-in-out infinite;
+        }
+
+        @keyframes truckIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .truck-window {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 65%;
+            height: 120px;
+            background: linear-gradient(135deg, #00D9FF 0%, #7FDBFF 50%, #fff 100%);
+            border-radius: 20px;
+            border: 6px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #FF6B35;
+            box-shadow: inset 0 8px 20px rgba(255,255,255,0.5), 0 8px 25px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .truck-wheels {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 60px;
+        }
+
+        .wheel {
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #555 30%, #333 50%, #111 70%);
+            border-radius: 50%;
+            border: 7px solid #222;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            position: relative;
+            animation: wheelSpin 2s linear infinite;
+        }
+
+        @keyframes wheelSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .wheel::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 25px;
+            height: 25px;
+            background: #888;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .truck-stripe {
+            position: absolute;
+            top: 175px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: repeating-linear-gradient(
+                90deg,
+                #FFD700 0px,
+                #FFD700 25px,
+                #FF1744 25px,
+                #FF1744 50px,
+                #00D9FF 50px,
+                #00D9FF 75px,
+                #7FFF00 75px,
+                #7FFF00 100px
+            );
+            animation: stripeMove 2s linear infinite;
+        }
+
+        @keyframes stripeMove {
+            from { background-position: 0 0; }
+            to { background-position: 100px 0; }
+        }
+
+        .truck-lights {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .light {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFD700;
+            box-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        .light:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Diverse Customer Queue */
+        .customer-queue {
+            position: absolute;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .customer {
+            text-align: center;
+            animation: customerWalk 0.6s ease-in-out;
+        }
+
+        @keyframes customerWalk {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px) scale(0.5);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .customer-avatar {
+            font-size: 56px;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.4));
+            animation: customerBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes customerBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .customer-bubble {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 3px solid #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            color: #333;
+        }
+
+        .customer-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 12px solid #333;
+        }
+
+        .customer-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #FFA500;
+        }
+
+        /* Orders Panel - More colorful */
+        .orders-panel {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border: 6px solid #FFD700;
+            max-height: 850px;
+            overflow-y: auto;
+        }
+
+        .orders-panel::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .orders-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .orders-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 10px;
+        }
+
+        .panel-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 5px solid;
+            border-image: linear-gradient(90deg, #FF6B35, #F7931E, #FDB827) 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .order-ticket {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFE4B5 50%, #FFD700 100%);
+            border: 4px solid #FF6B35;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 3px 10px rgba(255,255,255,0.5);
+            transition: all 0.3s;
+        }
+
+        .order-ticket:hover {
+            transform: scale(1.03) rotate(-1deg);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .order-customer {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 15px;
+            border: 3px solid #FF6B35;
+        }
+
+        .customer-icon {
+            font-size: 50px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .customer-info {
+            flex: 1;
+        }
+
+        .customer-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .order-timer-display {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 20px;
+            border: 3px solid #a93226;
+            box-shadow: 0 5px 15px rgba(231,76,60,0.5);
+            animation: timerPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 5px 15px rgba(231,76,60,0.5); }
+            50% { transform: scale(1.08); box-shadow: 0 8px 25px rgba(231,76,60,0.8); }
+        }
+
+        .order-items-list {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 4px solid #FF6B35;
+            box-shadow: inset 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .order-item-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #FFF 0%, #F0F0F0 100%);
+            border-radius: 12px;
+            border: 3px solid #FFD700;
+            transition: all 0.3s;
+        }
+
+        .order-item-row:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .item-emoji {
+            font-size: 36px;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+        }
+
+        .item-name {
+            flex: 1;
+            font-weight: bold;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .item-price {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .cooking-station {
+            margin: 20px 0;
+        }
+
+        .progress-container {
+            background: #333;
+            height: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #FFD700;
+            position: relative;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60 0%, #2ecc71 50%, #7FFF00 100%);
+            background-size: 200% 100%;
+            animation: progressShine 2s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            transition: width 0.3s;
+        }
+
+        @keyframes progressShine {
+            from { background-position: 0% 0%; }
+            to { background-position: 200% 0%; }
+        }
+
+        .order-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .game-btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .game-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-cook {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            border-color: #d68910;
+        }
+
+        .btn-cook:hover:not(:disabled) {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(243,156,18,0.5);
+        }
+
+        .btn-serve {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border-color: #1e8449;
+        }
+
+        .btn-serve:hover:not(:disabled) {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(39,174,96,0.5);
+        }
+
+        .game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Management Section - More vibrant */
+        .management-section {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            border: 6px solid #FFD700;
+            margin-top: 25px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            border: 4px solid #666;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border-color: #1f5f8b;
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(52,152,219,0.5);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .management-card {
+            background: linear-gradient(135deg, #FFFACD 0%, #FFE4B5 50%, #FFD700 100%);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 4px solid #FF6B35;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .management-card:hover {
+            transform: translateY(-5px) rotate(1deg);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .card-icon {
+            font-size: 40px;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+        }
+
+        .card-cost {
+            font-size: 28px;
+            font-weight: bold;
+            color: #27ae60;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card-description {
+            color: #333;
+            margin-bottom: 18px;
+            font-size: 17px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .hire-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            border: 4px solid #6c3483;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 8px 20px rgba(155,89,182,0.4);
+        }
+
+        .hire-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(155,89,182,0.6);
+        }
+
+        .hire-btn:disabled {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            border-color: #5a6268;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Floating notifications - More vibrant */
+        .notification {
+            position: fixed;
+            top: 120px;
+            right: 25px;
+            padding: 25px 35px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: slideInRight 0.5s, slideOutRight 0.5s 3.5s;
+            border: 5px solid;
+            min-width: 300px;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(500px) rotate(10deg); opacity: 0; }
+            to { transform: translateX(0) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0) rotate(0deg); opacity: 1; }
+            to { transform: translateX(500px) rotate(-10deg); opacity: 0; }
+        }
+
+        .notif-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            border-color: #1e8449;
+        }
+
+        .notif-error {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-color: #a93226;
+        }
+
+        .notif-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border-color: #1f5f8b;
+        }
+
+        .notif-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            border-color: #d68910;
+        }
+
+        /* Game Over Screen */
+        .game-over-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .game-over-screen.show {
+            display: flex;
+        }
+
+        .game-over-content {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 70px;
+            border-radius: 35px;
+            text-align: center;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.6);
+            border: 10px solid #FFD700;
+            animation: gameOverAppear 0.6s;
+        }
+
+        @keyframes gameOverAppear {
+            from { transform: scale(0) rotate(-180deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .game-over-title {
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 35px;
+            text-shadow: 5px 5px 10px rgba(0,0,0,0.6);
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .game-over-stats {
+            font-size: 26px;
+            color: white;
+            margin-bottom: 45px;
+            line-height: 2;
+        }
+
+        .restart-btn {
+            padding: 25px 60px;
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border: 5px solid #1e8449;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.15) rotate(-5deg);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        @media (max-width: 1200px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .game-world {
+                padding: 10px;
+            }
+
+            .hud {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .hud-title {
+                font-size: 28px;
+            }
+
+            .truck-emoji {
+                font-size: 40px;
+            }
+
+            .hud-stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+
+            .stat-box {
+                padding: 12px 18px;
+                flex: 1;
+                min-width: 80px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .game-area {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .truck-section, .orders-panel, .management-section {
+                padding: 20px;
+            }
+
+            .truck-visual {
+                height: 200px;
+            }
+
+            .customer-queue {
+                bottom: -70px;
+                gap: 10px;
+            }
+
+            .customer-avatar {
+                font-size: 40px;
+            }
+
+            .customer-bubble {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .panel-title {
+                font-size: 24px;
+            }
+
+            .order-ticket {
+                padding: 18px;
+            }
+
+            .customer-icon {
+                font-size: 40px;
+            }
+
+            .customer-name {
+                font-size: 18px;
+            }
+
+            .order-timer-display {
+                font-size: 16px;
+                padding: 8px 15px;
+            }
+
+            .item-emoji {
+                font-size: 28px;
+            }
+
+            .item-name {
+                font-size: 16px;
+            }
+
+            .game-btn {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .card-title {
+                font-size: 20px;
+            }
+
+            .card-icon {
+                font-size: 32px;
+            }
+
+            .tab-btn {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .notification {
+                top: 80px;
+                right: 10px;
+                left: 10px;
+                min-width: auto;
+                padding: 18px 25px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud-title {
+                font-size: 24px;
+            }
+
+            .truck-emoji {
+                font-size: 32px;
+            }
+
+            .stat-box {
+                padding: 10px 14px;
+            }
+
+            .stat-value {
+                font-size: 18px;
+            }
+
+            .customer-queue {
+                gap: 8px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .order-buttons {
+                flex-direction: column;
+            }
+
+            .game-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-stars" id="stars"></div>
+    <div id="floating-foods"></div>
+
+    <div class="game-world">
+        <div class="hud">
+            <div class="hud-title">
+                <span class="truck-emoji">🚚</span>
+               Your Name Here
+            </div>
+            <div class="hud-stats">
+                <div class="stat-box">
+                    <div class="stat-label">💰 Cash</div>
+                    <div class="stat-value money-value">$<span id="money">1500</span></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">⭐ Reputation</div>
+                    <div class="stat-value rep-value"><span id="reputation">100</span></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">📅 Day</div>
+                    <div class="stat-value day-value"><span id="day">1</span></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">⏰ Timer</div>
+                    <div class="stat-value day-value"><span id="day-timer">5:00</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="truck-section">
+                <div class="truck-visual">
+                    <div class="truck-lights">
+                        <div class="light"></div>
+                        <div class="light"></div>
+                    </div>
+                    <div class="truck-window">FOOD TRUCK</div>
+                    <div class="truck-stripe"></div>
+                    <div class="truck-wheels">
+                        <div class="wheel"></div>
+                        <div class="wheel"></div>
+                    </div>
+                </div>
+                <div class="customer-queue" id="customer-queue"></div>
+            </div>
+
+            <div class="orders-panel">
+                <div class="panel-title">📋 Active Orders</div>
+                <div id="orders-container"></div>
+            </div>
+        </div>
+
+        <div class="management-section">
+            <div class="panel-title">🏪 Management</div>
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('staff')">👥 Staff</button>
+                <button class="tab-btn" onclick="switchTab('menu')">🍔 Menu</button>
+                <button class="tab-btn" onclick="switchTab('bills')">💵 Bills</button>
+            </div>
+
+            <div id="staff-content" class="tab-content active">
+                <div id="staff-list"></div>
+            </div>
+
+            <div id="menu-content" class="tab-content">
+                <div id="menu-list"></div>
+            </div>
+
+            <div id="bills-content" class="tab-content">
+                <div id="bills-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over" class="game-over-screen">
+        <div class="game-over-content">
+            <div class="game-over-title">💀 GAME OVER 💀</div>
+            <div class="game-over-stats" id="final-stats"></div>
+            <button class="restart-btn" onclick="location.reload()">🔄 Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const foodEmojis = {
+            'Hamburger': '🍔',
+            'Cheeseburger': '🍔',
+            'Hot Dog': '🌭',
+            'Pizza Slice': '🍕',
+            'Taco': '🌮',
+            'Burrito': '🌯',
+            'French Fries': '🍟',
+            'Chicken Wings': '🍗',
+            'Nachos': '🧀',
+            'Milkshake': '🥤'
+        };
+
+        // 50 diverse characters with matched names and emojis
+        const customers = [
+            // Male characters
+            { emoji: '👨🏻', name: 'James' },
+            { emoji: '👨🏻‍🦱', name: 'Oliver' },
+            { emoji: '👨🏻‍🦰', name: 'Liam' },
+            { emoji: '👴🏻', name: 'Robert' },
+            { emoji: '🧔🏻', name: 'William' },
+            { emoji: '👨🏼', name: 'Noah' },
+            { emoji: '👨🏼‍🦱', name: 'Ethan' },
+            { emoji: '👨🏼‍🦰', name: 'Lucas' },
+            { emoji: '👴🏼', name: 'Michael' },
+            { emoji: '🧔🏼', name: 'Daniel' },
+            { emoji: '👨🏽', name: 'Juan' },
+            { emoji: '👨🏽‍🦱', name: 'Carlos' },
+            { emoji: '👨🏽‍🦰', name: 'Diego' },
+            { emoji: '👴🏽', name: 'Miguel' },
+            { emoji: '🧔🏽', name: 'Luis' },
+            { emoji: '👨🏾', name: 'Marcus' },
+            { emoji: '👨🏾‍🦱', name: 'Jamal' },
+            { emoji: '👨🏾‍🦰', name: 'Andre' },
+            { emoji: '👴🏾', name: 'Tyrone' },
+            { emoji: '🧔🏾', name: 'DeShawn' },
+            { emoji: '👨🏿', name: 'Kwame' },
+            { emoji: '👨🏿‍🦱', name: 'Kofi' },
+            { emoji: '👨🏿‍🦰', name: 'Tariq' },
+            { emoji: '👴🏿', name: 'Ahmed' },
+            { emoji: '🧔🏿', name: 'Omar' },
+            // Female characters
+            { emoji: '👩🏻', name: 'Emma' },
+            { emoji: '👩🏻‍🦱', name: 'Olivia' },
+            { emoji: '👩🏻‍🦰', name: 'Ava' },
+            { emoji: '👵🏻', name: 'Margaret' },
+            { emoji: '👩🏼', name: 'Sophia' },
+            { emoji: '👩🏼‍🦱', name: 'Charlotte' },
+            { emoji: '👩🏼‍🦰', name: 'Amelia' },
+            { emoji: '👵🏼', name: 'Patricia' },
+            { emoji: '👩🏽', name: 'Sofia' },
+            { emoji: '👩🏽‍🦱', name: 'Isabella' },
+            { emoji: '👩🏽‍🦰', name: 'Carmen' },
+            { emoji: '👵🏽', name: 'Rosa' },
+            { emoji: '👩🏾', name: 'Aaliyah' },
+            { emoji: '👩🏾‍🦱', name: 'Keisha' },
+            { emoji: '👩🏾‍🦰', name: 'Monique' },
+            { emoji: '👵🏾', name: 'Shaniqua' },
+            { emoji: '👩🏿', name: 'Amara' },
+            { emoji: '👩🏿‍🦱', name: 'Nia' },
+            { emoji: '👩🏿‍🦰', name: 'Zara' },
+            { emoji: '👵🏿', name: 'Fatima' },
+            // Asian names
+            { emoji: '🧑🏻', name: 'Wei' },
+            { emoji: '🧑🏼', name: 'Yuki' },
+            { emoji: '🧑🏽', name: 'Raj' },
+            { emoji: '🧑🏾', name: 'Chen' },
+            { emoji: '🧑🏿', name: 'Rashid' }
+        ];
+
+        const menuItems = [
+            { name: 'Hamburger', time: 8, price: 12, cost: 4 },
+            { name: 'Cheeseburger', time: 8, price: 14, cost: 5 },
+            { name: 'Hot Dog', time: 5, price: 8, cost: 3 },
+            { name: 'Pizza Slice', time: 10, price: 10, cost: 4 },
+            { name: 'Taco', time: 6, price: 9, cost: 3 },
+            { name: 'Burrito', time: 10, price: 13, cost: 5 },
+            { name: 'French Fries', time: 5, price: 6, cost: 2 },
+            { name: 'Chicken Wings', time: 12, price: 15, cost: 6 },
+            { name: 'Nachos', time: 6, price: 11, cost: 4 },
+            { name: 'Milkshake', time: 4, price: 7, cost: 2 }
+        ];
+
+        let game = {
+            money: 1500,
+            reputation: 100,
+            day: 1,
+            dayTimeLeft: 300,
+            orders: [],
+            staff: [],
+            bills: [],
+            cookingSpeed: 1,
+            orderId: 0,
+            nextOrderTime: 0,
+            gameTime: 0,
+            paused: false,
+            usedCustomers: []
+        };
+
+        const staffTypes = [
+            { 
+                name: 'Experienced Cook',
+                icon: '👨‍🍳',
+                salary: 80,
+                speedBonus: 0.8,
+                description: 'Cooks 80% faster! Master of the grill!',
+                hired: false,
+                cost: 200
+            },
+            { 
+                name: 'Friendly Server',
+                icon: '🧑‍💼',
+                salary: 60,
+                speedBonus: 0.5,
+                description: 'Speeds up service by 50%! Customers love them!',
+                hired: false,
+                cost: 150
+            },
+            { 
+                name: 'Marketing Manager',
+                icon: '📣',
+                salary: 100,
+                speedBonus: 0.3,
+                description: 'Attracts customers and protects reputation! +30% speed!',
+                hired: false,
+                cost: 300
+            }
+        ];
+
+        // Initialize animated background
+        function initBackground() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+
+            const foodsContainer = document.getElementById('floating-foods');
+            const floatingFoods = ['🍔', '🌭', '🍕', '🌮', '🍟', '🍗', '🥤'];
+            setInterval(() => {
+                const food = document.createElement('div');
+                food.className = 'floating-food';
+                food.textContent = floatingFoods[Math.floor(Math.random() * floatingFoods.length)];
+                food.style.left = Math.random() * 100 + '%';
+                food.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                foodsContainer.appendChild(food);
+                setTimeout(() => food.remove(), 8000);
+            }, 2000);
+        }
+
+        function init() {
+            initBackground();
+            updateUI();
+            renderStaff();
+            renderMenu();
+            generateBills();
+            setInterval(gameLoop, 1000);
+            generateOrder();
+            generateOrder();
+        }
+
+        function gameLoop() {
+            if (game.paused) return;
+            
+            game.gameTime++;
+            game.dayTimeLeft--;
+            
+            // Check if day is over
+            if (game.dayTimeLeft <= 0) {
+                advanceDay();
+                game.dayTimeLeft = 300; // Reset to 5 minutes
+            }
+            
+            // Generate new orders at a slower pace
+            if (game.gameTime >= game.nextOrderTime && game.orders.length < 4) {
+                generateOrder();
+                game.nextOrderTime = game.gameTime + Math.floor(Math.random() * 15) + 20;
+            }
+
+            // Update orders
+            game.orders.forEach(order => {
+                if (order.cooking && !order.ready) {
+                    order.progress += game.cookingSpeed * 1.5;
+                    if (order.progress >= 100) {
+                        order.progress = 100;
+                        order.cooking = false;
+                        order.ready = true;
+                        showNotification('✅ Order ready to serve!', 'success');
+                    }
+                }
+                
+                order.timeLeft -= 1;
+                
+                if (order.timeLeft <= 0 && !order.completed) {
+                    failOrder(order);
+                }
+            });
+
+            renderOrders();
+            renderCustomerQueue();
+            updateUI();
+            checkGameOver();
+        }
+
+        function getRandomCustomer() {
+            let customer;
+            let attempts = 0;
+            
+            do {
+                customer = customers[Math.floor(Math.random() * customers.length)];
+                attempts++;
+            } while (game.usedCustomers.includes(customer.name + customer.emoji) && attempts < 50);
+            
+            game.usedCustomers.push(customer.name + customer.emoji);
+            if (game.usedCustomers.length > 30) {
+                game.usedCustomers.shift();
+            }
+            
+            return { customer: customer.name, avatar: customer.emoji };
+        }
+
+        function generateOrder() {
+            const numItems = Math.floor(Math.random() * 2) + 1;
+            const items = [];
+            let totalTime = 0;
+            
+            for (let i = 0; i < numItems; i++) {
+                const item = menuItems[Math.floor(Math.random() * menuItems.length)];
+                items.push(item);
+                totalTime += item.time;
+            }
+            
+            const { customer, avatar } = getRandomCustomer();
+            
+            const order = {
+                id: game.orderId++,
+                customer: customer,
+                avatar: avatar,
+                items: items,
+                timeLeft: totalTime * 10,
+                maxTime: totalTime * 10,
+                cooking: false,
+                ready: false,
+                completed: false,
+                progress: 0
+            };
+            
+            game.orders.push(order);
+            showNotification(`📢 New order from ${order.customer}!`, 'info');
+        }
+
+        function cookOrder(orderId) {
+            const order = game.orders.find(o => o.id === orderId);
+            if (order && !order.cooking && !order.ready) {
+                const totalCost = order.items.reduce((sum, item) => sum + item.cost, 0);
+                if (game.money >= totalCost) {
+                    game.money -= totalCost;
+                    order.cooking = true;
+                    updateUI();
+                    showNotification(`🍳 Started cooking! -${totalCost}`, 'info');
+                } else {
+                    showNotification('❌ Not enough money for ingredients!', 'error');
+                }
+            }
+        }
+
+        function serveOrder(orderId) {
+            const order = game.orders.find(o => o.id === orderId);
+            if (order && order.ready) {
+                const totalPrice = order.items.reduce((sum, item) => sum + item.price, 0);
+                const tip = order.timeLeft > order.maxTime * 0.5 ? Math.floor(totalPrice * 0.3) : 0;
+                const earnings = totalPrice + tip;
+                
+                game.money += earnings;
+                game.reputation += 5;
+                order.completed = true;
+                game.orders = game.orders.filter(o => o.id !== orderId);
+                
+                if (tip > 0) {
+                    showNotification(`🎉 ${order.customer} tipped! +${earnings} (Tip: ${tip})`, 'success');
+                } else {
+                    showNotification(`✅ Order served to ${order.customer}! +${earnings}`, 'success');
+                }
+                
+                updateUI();
+            }
+        }
+
+        function failOrder(order) {
+            if (!order.completed) {
+                const hasMarketing = staffTypes[2].hired;
+                const repLoss = hasMarketing ? 3 : 10;
+                
+                game.reputation -= repLoss;
+                order.completed = true;
+                game.orders = game.orders.filter(o => o.id !== order.id);
+                showNotification(`😞 ${order.customer} left angry! -${repLoss} reputation`, 'error');
+                updateUI();
+            }
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            
+            if (game.orders.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 80px 20px; color: #999; font-size: 24px; font-weight: bold;">🎯 Waiting for hungry customers...</div>';
+                return;
+            }
+            
+            container.innerHTML = game.orders.map(order => {
+                const timePercent = (order.timeLeft / order.maxTime) * 100;
+                
+                return `
+                    <div class="order-ticket">
+                        <div class="order-customer">
+                            <div class="customer-icon">${order.avatar}</div>
+                            <div class="customer-info">
+                                <div class="customer-name">${order.customer}</div>
+                            </div>
+                            <div class="order-timer-display">⏰ ${order.timeLeft}s</div>
+                        </div>
+                        
+                        <div class="order-items-list">
+                            ${order.items.map(item => `
+                                <div class="order-item-row">
+                                    <span class="item-emoji">${foodEmojis[item.name]}</span>
+                                    <span class="item-name">${item.name}</span>
+                                    <span class="item-price">${item.price}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${order.cooking || order.ready ? `
+                            <div class="cooking-station">
+                                <div class="progress-container">
+                                    <div class="progress-fill" style="width: ${order.progress}%">
+                                        ${order.progress >= 100 ? '✅ READY TO SERVE!' : `🔥 Cooking ${Math.floor(order.progress)}%`}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="order-buttons">
+                            ${!order.ready ? `
+                                <button class="game-btn btn-cook" onclick="cookOrder(${order.id})" ${order.cooking ? 'disabled' : ''}>
+                                    ${order.cooking ? '🔥 Cooking...' : '👨‍🍳 Start Cooking'}
+                                </button>
+                            ` : `
+                                <button class="game-btn btn-serve" onclick="serveOrder(${order.id})">
+                                    🍽️ Serve to ${order.customer}
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCustomerQueue() {
+            const container = document.getElementById('customer-queue');
+            const visibleCustomers = game.orders.slice(0, 4);
+            
+            if (visibleCustomers.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = visibleCustomers.map(order => `
+                <div class="customer">
+                    <div class="customer-avatar">${order.avatar}</div>
+                    <div class="customer-bubble">${order.customer}<br>⏰ ${order.timeLeft}s</div>
+                </div>
+            `).join('');
+        }
+
+        function renderStaff() {
+            const container = document.getElementById('staff-list');
+            
+            container.innerHTML = staffTypes.map((staff, idx) => `
+                <div class="management-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-icon">${staff.icon}</span>
+                            ${staff.name}
+                        </div>
+                        <div class="card-cost">${staff.cost}</div>
+                    </div>
+                    <div class="card-description">
+                        ${staff.description}<br>
+                        💰 Daily Salary: ${staff.salary}
+                    </div>
+                    <button class="hire-btn" onclick="hireStaff(${idx})" ${staff.hired ? 'disabled' : ''}>
+                        ${staff.hired ? '✅ Already Hired' : '🤝 Hire Now'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function hireStaff(idx) {
+            const staff = staffTypes[idx];
+            
+            if (game.money >= staff.cost && !staff.hired) {
+                game.money -= staff.cost;
+                staff.hired = true;
+                game.cookingSpeed += staff.speedBonus;
+                showNotification(`🎉 Hired ${staff.name}! Cooking speed increased!`, 'success');
+                renderStaff();
+                updateUI();
+            } else if (staff.hired) {
+                showNotification('Already hired!', 'info');
+            } else {
+                showNotification('❌ Not enough money!', 'error');
+            }
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-list');
+            
+            container.innerHTML = menuItems.map(item => `
+                <div class="management-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-icon">${foodEmojis[item.name]}</span>
+                            ${item.name}
+                        </div>
+                        <div class="card-cost">${item.price}</div>
+                    </div>
+                    <div class="card-description">
+                        ⏱️ Base Cook Time: ${item.time} seconds<br>
+                        💵 Ingredient Cost: ${item.cost}<br>
+                        💰 Profit Per Sale: ${item.price - item.cost}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateBills() {
+            game.bills = [
+                { name: '🏠 Truck Rent', amount: 200, dueDay: 7, paid: false, icon: '🏠' },
+                { name: '📦 Food Supplies', amount: 150, dueDay: 5, paid: false, icon: '📦' },
+                { name: '💡 Gas & Utilities', amount: 100, dueDay: 10, paid: false, icon: '💡' }
+            ];
+            renderBills();
+        }
+
+        function renderBills() {
+            const container = document.getElementById('bills-list');
+            
+            container.innerHTML = game.bills.map((bill, idx) => {
+                const overdue = game.day > bill.dueDay && !bill.paid;
+                
+                return `
+                    <div class="management-card" style="${overdue ? 'border-color: #e74c3c; background: linear-gradient(135deg, #ffcccc 0%, #ff9999 50%, #ff6666 100%);' : ''}">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span class="card-icon">${bill.icon}</span>
+                                ${bill.name}
+                            </div>
+                            <div class="card-cost">${bill.amount}</div>
+                        </div>
+                        <div class="card-description">
+                            📅 Due Date: Day ${bill.dueDay}<br>
+                            ${overdue ? '⚠️ <strong style="color: #e74c3c; font-size: 18px;">OVERDUE! Pay now!</strong>' : '✅ Current'}
+                        </div>
+                        <button class="hire-btn" onclick="payBill(${idx})" ${bill.paid ? 'disabled' : ''} 
+                                style="${bill.paid ? '' : 'background: linear-gradient(135deg, #27ae60 0%, #229954 100%); border-color: #1e8449;'}">
+                            ${bill.paid ? '✅ Already Paid' : '💵 Pay Bill'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function payBill(idx) {
+            const bill = game.bills[idx];
+            
+            if (!bill.paid && game.money >= bill.amount) {
+                game.money -= bill.amount;
+                bill.paid = true;
+                showNotification(`✅ Paid ${bill.name}! Thanks for staying current!`, 'success');
+                renderBills();
+                updateUI();
+            } else if (bill.paid) {
+                showNotification('This bill is already paid!', 'info');
+            } else {
+                showNotification('❌ Not enough money to pay this bill!', 'error');
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+        }
+
+        function updateUI() {
+            document.getElementById('money').textContent = game.money;
+            document.getElementById('reputation').textContent = game.reputation;
+            document.getElementById('day').textContent = game.day;
+            
+            // Update day timer display
+            const minutes = Math.floor(game.dayTimeLeft / 60);
+            const seconds = game.dayTimeLeft % 60;
+            document.getElementById('day-timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function advanceDay() {
+            game.day++;
+            
+            // Pay staff salaries
+            let totalSalary = 0;
+            staffTypes.forEach(staff => {
+                if (staff.hired) {
+                    totalSalary += staff.salary;
+                }
+            });
+            
+            if (totalSalary > 0) {
+                game.money -= totalSalary;
+                showNotification(`📅 Day ${game.day}! Paid staff: ${totalSalary}`, 'warning');
+            } else {
+                showNotification(`📅 Welcome to Day ${game.day}! Keep hustling!`, 'info');
+            }
+            
+            // Check overdue bills
+            game.bills.forEach(bill => {
+                if (!bill.paid && game.day > bill.dueDay) {
+                    game.reputation -= 20;
+                    showNotification(`⚠️ LATE BILL: ${bill.name} -20 reputation!`, 'error');
+                }
+            });
+            
+            // Reset bills for new week
+            if (game.day % 7 === 1) {
+                generateBills();
+            }
+            
+            updateUI();
+            renderBills();
+        }
+
+        function checkGameOver() {
+            if (game.money < -500 || game.reputation <= 0) {
+                game.paused = true;
+                const screen = document.getElementById('game-over');
+                const stats = document.getElementById('final-stats');
+                
+                let reason = game.reputation <= 0 ? 'Your reputation hit rock bottom! 😭' : 'You went bankrupt! 💸';
+                
+                stats.innerHTML = `
+                    <p style="font-size: 32px; margin-bottom: 25px;">${reason}</p>
+                    <p>🏆 You survived ${game.day} days!</p>
+                    <p>💰 Final Cash: ${game.money}</p>
+                    <p>⭐ Final Reputation: ${game.reputation}</p>
+                    <p style="margin-top: 20px; font-size: 20px;">Better luck next time, chef! 👨‍🍳</p>
+                `;
+                
+                screen.classList.add('show');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification notif-${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 4000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
+
